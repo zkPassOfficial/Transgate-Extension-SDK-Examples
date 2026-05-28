@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "zkPass — Weather",
+  "version": "0.1.0",
+  "description": "Minimal example: zkPass zkTLS verification of weatherstack.com from a Chrome MV3 service worker.",
+  "minimum_chrome_version": "114",
+  "background": { "service_worker": "sw.js", "type": "module" },
+  "action": {},
+  "side_panel": { "default_path": "sidepanel.html" },
+  "permissions": ["webRequest", "webNavigation", "tabs", "storage", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

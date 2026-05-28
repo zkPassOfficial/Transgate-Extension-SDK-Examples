@@ -1,0 +1,17 @@
+{
+  "name": "zkpass-sdk-example-minimal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal zkPass SDK example for Chrome MV3.",
+  "scripts": {
+    "build": "esbuild sw.js --bundle --outfile=dist/sw.js --format=esm --target=es2022 --legal-comments=none && cp manifest.json sidepanel.html sidepanel.js dist/",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@zkpass/transgate-extension-sdk": "^0.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  }
+}

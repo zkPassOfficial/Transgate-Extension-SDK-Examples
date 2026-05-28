@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "zkPass — Twitter",
+  "version": "0.1.0",
+  "description": "Realistic zkPass SDK example: verifies you follow @zkPass on Twitter / X, with live status, categorized errors, and full proof display.",
+  "minimum_chrome_version": "114",
+  "background": { "service_worker": "sw.js", "type": "module" },
+  "action": {},
+  "side_panel": { "default_path": "sidepanel.html" },
+  "permissions": ["webRequest", "webNavigation", "tabs", "storage", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

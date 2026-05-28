@@ -1,4 +1,4 @@
-# zkPass-Extension-SDK-Examples
+# Transgate-Extension-SDK-Examples
 
 Examples and tutorials for integrating the zkPass SDK into your own Chrome extensions.
 

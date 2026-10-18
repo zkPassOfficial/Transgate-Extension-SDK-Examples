@@ -44,3 +44,11 @@ To understand how the SDK is used, read the files in this order:
 |---|---|
 | `npm run build` | Bundle `sw.js` into `dist/sw.js` and copy `manifest.json` / `sidepanel.html` / `sidepanel.js` into `dist/`. |
 | `npm run clean` | Remove `dist/`. |
+
+## Implementation boundaries
+
+This example declares SDK `^0.1.0` without a lockfile. Remote schema/notary services, schema/application compatibility, and browser behavior have not been tested here. The fixed AES material in configuration is demonstration input, not a production key-management pattern; no valid-proof guarantee follows from placeholder bytes.
+
+The worker handles incoming run messages without a worker-level in-flight guard or an AbortController cancellation bridge. Avoid overlapping requests and add deliberate lifecycle/error handling before adapting it. Proofs and underlying error messages may contain sensitive information; inspect them locally and redact before sharing.
+
+The minimal worker opens the trigger tab in `onListening` but does not close it afterward and has no surrounding `try/catch`. A rejected SDK promise can therefore bypass its result message.

@@ -2,8 +2,10 @@
 
 How to integrate **`@zkpass/transgate-extension-sdk`** into your own Chrome MV3 extension — from `npm install` to a working `runZKTLS` call, including the patterns the SDK was designed around.
 
+**Scope:** the examples declare SDK `^0.1.0` without lockfiles. This guide preserves teaching snippets and historical SDK descriptions; internal defaults, cleanup, error completeness, and compatibility are not independently established by this checkout. Remote schema/allocation/notary services are still required. No installation, build, browser login, or proof run was performed.
+
 For type signatures and option tables, see **[API Reference](./api-reference.md)**.
-For runnable code, see the **[`01-minimal/`](../01-minimal)** and **[`02-login-site/`](../02-login-site)** examples.
+For source examples, see the **[`01-minimal/`](../01-minimal)** and **[`02-login-site/`](../02-login-site)** examples.
 
 ---
 
@@ -63,7 +65,7 @@ The SDK doesn't navigate, log in, or trigger requests on your behalf — it obse
 - Chrome 114+ (or any Chromium-based browser with the same MV3 support).
 - Node.js 18+ and npm (for installing the SDK in your project).
 - A zkPass `schemaId` and `appId` — both required for any call; the `appId` cannot be an empty string.
-- AES key material (`aesKey: Uint8Array(32)`, `aesNonce: Uint8Array(12)`). Placeholder bytes are enough to produce a valid proof in dev/test; in production, generate fresh random bytes per run.
+- AES key material (`aesKey: Uint8Array(32)`, `aesNonce: Uint8Array(12)`). Fixed placeholder bytes illustrate the input shape only; they are not evidence of a valid proof or a secure configuration. Use an appropriate fresh-randomness/key-management design when adapting the example.
 
 ### Minimum `manifest.json` for the SDK
 
@@ -136,7 +138,7 @@ A single `runZKTLS` call performs these steps in order and **short-circuits on t
 
 Also possible: `MISSING_AES_KEY` (no keys), `INVALID_CONTEXT` (not a SW), `ABORTED` (caller cancelled).
 
-**The SDK never throws.** Any failure becomes a `{ success: false, code, error }` result. You always get a result object back.
+The mirrored API represents expected failures as `{ success: false, code, error }`. Also handle rejected promises and callback/browser errors; the examples do not establish a universal no-throw guarantee.
 
 ---
 
@@ -287,7 +289,7 @@ if (!result.success) {
 
 This collapses 12 codes into 7 user-facing categories with actionable hints.
 
-**Always also log `code` and `error`** for support / debugging — `error` carries the underlying message (network error, server response, etc.).
+For diagnosis, retain an appropriate error code and a redacted message. Underlying server/network errors and proof data can contain sensitive information; do not log or share them indiscriminately.
 
 ---
 
@@ -301,18 +303,20 @@ onStatus: (msg) => updateUI({ stage: msg })
 
 `msg` is a [`STATUS_MSG`](./api-reference.md#status_msg) value. Use the constant for any conditional logic; use the raw text only for display.
 
+The following short patterns assume a caller-defined `baseOptions` object containing the required schema/application/AES inputs. They illustrate option composition, not a standalone runnable application.
+
 ### Bounded timeout
 
 The SDK default is 2 minutes. Override per-call:
 ```js
-await sdk.runZKTLS({ ..., timeoutMs: 90_000 })
+await sdk.runZKTLS({ ...baseOptions, timeoutMs: 90_000 })
 ```
 
 ### Cancellation
 
 ```js
 const ac = new AbortController();
-const p = sdk.runZKTLS({ ..., signal: ac.signal });
+const p = sdk.runZKTLS({ ...baseOptions, signal: ac.signal });
 // elsewhere:
 ac.abort();  // resolves p with { success: false, code: 'ABORTED' }
 ```
@@ -325,7 +329,7 @@ The SDK is designed to be called serially. Each `runZKTLS` registers and tears d
 
 ```js
 for (const schemaId of schemaIds) {
-  results.push(await sdk.runZKTLS({ schemaId, ... }));
+  results.push(await sdk.runZKTLS({ ...baseOptions, schemaId }));
 }
 ```
 
@@ -339,7 +343,7 @@ The same SDK instance is reusable across calls — no need to `new` per run.
 
 A successful `RunResult` carries:
 - `validatorSignature` — the notary's signature, suitable for on-chain verification.
-- `uHash` — the nullifier hash (prevents replay).
+- `uHash` — the nullifier hash; replay prevention requires a downstream policy that records and checks it.
 - `publicFields` — the fields the schema declared public.
 - `allocatorAddress` / `allocatorSignature`, `validatorAddress`, `taskId` — for on-chain claim flows.
 
@@ -358,7 +362,7 @@ Order of causes, from most to least common:
 Quick checks: open Chrome devtools on the trigger tab, watch the Network panel — did the matching request actually fire? Did it match the schema's URL pattern?
 
 **`NODE_UNREACHABLE`.**
-Almost always an `appId` problem (empty / invalid / revoked) — the server rejects with HTTP 500. Double-check the value in `config.js`. The dev server endpoint also matters; if you're targeting prod, ensure your `appId` is valid there.
+Possible causes include application authorization, service availability, and network failures. Check the selected schema/application configuration without assuming one HTTP status or exposing credentials. The dev server endpoint also matters; if you're targeting prod, ensure your `appId` is valid there.
 
 **`SIGNATURE_INVALID`.**
 The schema's signature didn't verify against the SDK's pinned public key. Either the schema was tampered with (unlikely on the canonical zkPass server) or you're targeting a schema published with a key the SDK doesn't recognize. Check the SDK version (key may have rotated).
@@ -377,6 +381,6 @@ That's expected — WASM (~2 MB), DOM parsing (jsdom), and crypto are inlined in
 ## Further reading
 
 - **[`api-reference.md`](./api-reference.md)** — full API surface (types, options, codes, status constants).
-- **[`01-minimal/`](../01-minimal)** — the smallest runnable extension.
+- **[`01-minimal/`](../01-minimal)** — the smallest extension source example.
 - **[`02-login-site/`](../02-login-site)** — realistic integration with progress + categorized errors.
 - **[`@zkpass/transgate-extension-sdk` on npm](https://www.npmjs.com/package/@zkpass/transgate-extension-sdk)** — the canonical source of truth (README is rendered on the package page).

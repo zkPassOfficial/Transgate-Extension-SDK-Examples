@@ -4,6 +4,10 @@ The public API surface of `@zkpass/transgate-extension-sdk` — small and intent
 
 > This is a mirror of the SDK's own API reference, kept here so you can navigate everything from the examples repo. For the canonical version, see the README on the [`@zkpass/transgate-extension-sdk` npm page](https://www.npmjs.com/package/@zkpass/transgate-extension-sdk).
 
+## Version scope
+
+Both checked-in examples declare `^0.1.0`; no lockfile pins a resolved package. This reference is retained as an integration aid, not an audit of the installed SDK internals. Defaults, export completeness, status constants, cancellation, and WASM cleanup must be checked against the selected SDK version. The examples themselves call `runZKTLS`; they do not validate every API described below. No SDK execution or network verification was performed.
+
 ## Public exports
 
 ```ts
@@ -23,7 +27,7 @@ import {
 | Member | Signature | Description |
 |---|---|---|
 | constructor | `new TransGateExtensionCore()` | Creates a reusable instance. Holds no cross-call state. |
-| `runZKTLS` | `(opts: RunZKTLSOptions) => Promise<RunResult>` | Runs one full verification. **Never throws** — all failures are returned as a `RunResult`. |
+| `runZKTLS` | `(opts: RunZKTLSOptions) => Promise<RunResult>` | Runs one full verification. The mirrored contract uses `RunResult` for failures; consumers should still handle rejected promises. |
 | `destroy` | `() => Promise<void>` | Optional, idempotent manual WASM release. Usually unnecessary — `runZKTLS` releases WASM internally on every call (success or failure). |
 
 ## `RunZKTLSOptions`
@@ -31,10 +35,10 @@ import {
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `schemaId` | `string` | yes | — | A published zkPass schema id. |
-| `appId` | `string` | yes | — | A valid zkPass appId. An empty string is rejected by the server (HTTP 500). |
+| `appId` | `string` | yes | — | A valid zkPass appId. Server acceptance and error status depend on the deployed service. |
 | `aesKeys` | `{ aesKey: Uint8Array; aesNonce: Uint8Array }` | yes | — | AES key material injected by the caller. |
 | `httpVersion` | `string` | no | `'1.1'` | Override the HTTP version. `/schema` does not always return it. |
-| `timeoutMs` | `number` | no | `120000` | Overall timeout. Guarantees the call cannot hang forever. |
+| `timeoutMs` | `number` | no | `120000` | Documented timeout parameter; a hard end-to-end deadline is not verified here. |
 | `onStatus` | `(msg: string) => void` | no | — | Progress callback. `msg` is one of the [`STATUS_MSG`](#status_msg) values. |
 | `onListening` | `() => void \| Promise<void>` | no | — | Called once when the `chrome.webRequest` listener is registered — the **precise moment** to trigger the target request. |
 | `signal` | `AbortSignal` | no | — | Cancellation. Best-effort (checked between phases; WASM computation cannot be interrupted mid-call). |

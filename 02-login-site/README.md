@@ -59,3 +59,11 @@ Prefer this callback over matching the `STATUS_MSG.WAITING_MATCH` text — `onLi
 |---|---|
 | `npm run build` | Bundle `sw.js` into `dist/sw.js` and copy `manifest.json` / `sidepanel.html` / `sidepanel.js` into `dist/`. |
 | `npm run clean` | Remove `dist/`. |
+
+## Implementation boundaries
+
+This example declares SDK `^0.1.0` without a lockfile. Remote schema/notary services, schema/application compatibility, and browser behavior have not been tested here. The fixed AES material in configuration is demonstration input, not a production key-management pattern; no valid-proof guarantee follows from placeholder bytes.
+
+The worker handles incoming run messages without a worker-level in-flight guard or an AbortController cancellation bridge. Avoid overlapping requests and add deliberate lifecycle/error handling before adapting it. Proofs and underlying error messages may contain sensitive information; inspect them locally and redact before sharing.
+
+The login example forwards status history and categorizes unsuccessful SDK results. Its `finally` closes the trigger tab if created; the `try` has no `catch`, so an unexpected rejected promise is not converted into a categorized result. The configured login-gated site/schema is a historical example, not a current availability claim.
